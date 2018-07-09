@@ -1,0 +1,33 @@
+{
+
+	"name": "firebone/youtube-downloader",
+  
+  "description": "A simple YouTube Downloader & PHP powered alternative for youtube-dl",
+
+	"keywords": ["youtube downloader", "download youtube", "download youtube videos"],
+  
+  "type": "library",
+  
+  "homepage": "https://github.com/hex-firebone/YouTube-Downloader",
+
+	"license": "AGPL-3.0",
+
+	"require": {
+  
+    "php": "^5.6 || ^7.0",
+
+		"ext-curl": "*"
+
+	},
+
+	"autoload": {
+
+		"files": [
+
+			"src/YTDownloader.php"
+
+		]
+
+	}
+
+}
