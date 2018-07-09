@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/hex-firebone/YouTube-Downloader.svg?branch=master)](https://travis-ci.org/hex-firebone/YouTube-Downloader)
+
 # YouTube Downloader
 
 This project was inspired by a very popular [youtube-dl](https://github.com/rg3/youtube-dl) python package:
