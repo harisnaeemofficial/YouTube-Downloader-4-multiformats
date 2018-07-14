@@ -13,7 +13,7 @@ This script does not depend on anything other than cURL. No Javascript interpret
 Recommended way of installing this is via [Composer](http://getcomposer.org/):
 
 ```
-composer require firebone/youtube-downloader
+composer require madcodez/youtube-downloader
 ```
 
 ## Usage
