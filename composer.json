@@ -1,6 +1,6 @@
 {
 
-	"name": "firebone/youtube-downloader",
+	"name": "madcodez/youtube-downloader",
   
   "description": "A simple YouTube Downloader & PHP powered alternative for youtube-dl",
 
@@ -8,7 +8,7 @@
   
   "type": "library",
   
-  "homepage": "https://github.com/hex-firebone/YouTube-Downloader",
+  "homepage": "https://github.com/madcode-git/YouTube-Downloader",
 
 	"license": "AGPL-3.0",
 
