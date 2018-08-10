@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/hex-firebone/YouTube-Downloader.svg?branch=master)](https://travis-ci.org/hex-firebone/YouTube-Downloader)
+[![Maintainability](https://api.codeclimate.com/v1/badges/a970dc85ec7f781e0797/maintainability)](https://codeclimate.com/github/madcode-git/YouTube-Downloader/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/a970dc85ec7f781e0797/test_coverage)](https://codeclimate.com/github/madcode-git/YouTube-Downloader/test_coverage)
 
 # YouTube Downloader
 
