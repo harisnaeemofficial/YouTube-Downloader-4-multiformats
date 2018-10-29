@@ -290,24 +290,25 @@ class YTDownloader {
 
     private function sig_js_decode($player_html){
     
-    	$prefix ="/\W*.*;\w\&&\w\.set\(\w,";
-    	$funcName = "([\$a-zA-Z0-9]{2})";
-    	$suffix= "\(.*\).*;.*;/";
+    	$signatureFunctionPatterns = [
+            '/(["\'])signature\1\s*,\s*([a-zA-Z0-9$]+)\(/',
+            '/\.sig\|\|([a-zA-Z0-9$]+)\(/',
+            '/yt\.akamaized\.net\/\)\s*\|\|\s*.*?\s*c\s*&&\s*d\.set\([^,]+\s*,\s*([a-zA-Z0-9$]+)\(/',
+            '/\bc\s*&&\s*d\.set\([^,]+\s*,\s*([a-zA-Z0-9$]+)\(/',
+        ];
+
+        foreach ($signatureFunctionPatterns as $pattern) {
     	
-    	if(preg_match($prefix.$funcName.$suffix, $player_html, $matches)){
+    	if(preg_match($pattern, $player_html, $matches)){
     
     	$func_name = $matches[1];		
     	$func_name = preg_quote($func_name);
     
-    	// extract code block from that function
-    	// single quote in case function name contains $dollar sign
-    	// xm=function(a){a=a.split("");wm.zO(a,47);wm.vY(a,1);wm.z9(a,68);wm.zO(a,21);wm.z9(a,34);wm.zO(a,16);wm.z9(a,41);return a.join("")};
+    	
     	if(preg_match('/'.$func_name.'=function\([a-z]+\){(.*?)}/', $player_html, $matches)){
     
     	$js_code = $matches[1];
     
-    	// extract all relevant statements within that block
-    	// wm.vY(a,1);
     	if(preg_match_all('/([a-z0-9]{2})\.([a-z0-9]{2})\([^,]+,(\d+)\)/i', $js_code, $matches) != false){
     
     	// must be identical
@@ -341,6 +342,8 @@ class YTDownloader {
     
     	return $instructions;
     	}
+    	}
+    		break;
     	}
     	}
     
