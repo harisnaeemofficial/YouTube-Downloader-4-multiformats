@@ -2,7 +2,7 @@
 
 class YTDownloader {
 
-    private $cache_dir;
+  private $cache_dir;
 
 	private $cookie_dir;	
 
@@ -19,6 +19,20 @@ class YTDownloader {
 		17 => "3GP[176x144]"
 
 	);
+
+  private $itag_ext = array(
+
+    18 => ".mp4",
+
+    22 => "",
+
+    36 => ".3gp",
+
+    43 => ".webm",  
+
+    17 => ".3gp"
+
+  );
 
 	
 
@@ -40,7 +54,7 @@ class YTDownloader {
 
                $videoID = $id;
 
-               $webPage = $this->curlGet('https://www.youtube.com/embed/'.$videoID);      
+               $webPage = $this->curlGet('http://ss.de.prx.genyoutube.com/www.youtube.com/embed/'.$videoID);      
 
                $sts = null;
 
@@ -78,7 +92,7 @@ class YTDownloader {
 
           
 
-                if($this->is_Ok($videoData = $this->curlGet("https://www.youtube.com/get_video_info?{$query}"))) {
+                if($this->is_Ok($videoData = $this->curlGet("http://ss.de.prx.genyoutube.com/www.youtube.com/get_video_info?{$query}"))) {
 
                         parse_str($videoData, $videoData);
 
@@ -102,7 +116,7 @@ class YTDownloader {
 
                    $linkData[] = array(
 
-                     'url' => preg_replace('@(\/\/)[^\.]+(\.googlevideo\.com)@', '$1redirector$2', $linker['url']).'&signature='.$this->sig_decipher($linker['s'],$this->get_instructions($webPage)).'&title='.$this->clean_name($videoData['title']),
+                     'url' => preg_replace('@(https\:\/\/)[^\.]+(\.googlevideo\.com)@', 'http://ss.de.prx.genyoutube.com/redirector$2', $linker['url']).'&signature='.$this->sig_decipher($linker['s'],$this->get_instructions($webPage)).'&title='.$this->clean_name($videoData['title']).$this->itag_ext[$linker['itag']],
 
                      'itag' => $linker['itag'],
 
@@ -114,7 +128,7 @@ class YTDownloader {
 
                   $linkData[] = array(
 
-                    'url' => preg_replace('@(\/\/)[^\.]+(\.googlevideo\.com)@', '$1redirector$2', $linker['url']).'&title='.$this->clean_name($videoData['title']),
+                    'url' => preg_replace('@(https\:\/\/)[^\.]+(\.googlevideo\.com)@', 'http://ss.de.prx.genyoutube.com/redirector$2', $linker['url']).'&title='.$this->clean_name($videoData['title']).$this->itag_ext[$linker['itag']],
 
                     'itag' => $linker['itag'],
 
@@ -148,39 +162,33 @@ class YTDownloader {
 
 	
 
-		$ch = curl_init($url);
+		            $ch = curl_init($url);
+
+		            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0');
+
+		            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+		            curl_setopt($ch, CURLOPT_HEADER, 0);
+
+		            curl_setopt($ch, CURLOPT_COOKIEJAR, $tmpfname);
+
+		            curl_setopt($ch, CURLOPT_COOKIEFILE, $tmpfname);
+
+		            //curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+
+		            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+
+		            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
 
 		
 
-		curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0');
+		            $result = curl_exec($ch);
 
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-		curl_setopt($ch, CURLOPT_HEADER, 0);
+		            curl_close($ch);
 
 		
 
-		curl_setopt($ch, CURLOPT_COOKIEJAR, $tmpfname);
-
-		curl_setopt($ch, CURLOPT_COOKIEFILE, $tmpfname);
-
-		
-
-		//curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-
-		
-
-		$result = curl_exec($ch);
-
-		curl_close($ch);
-
-		
-
-		return $result;
+		            return $result;
 
 	}
 
