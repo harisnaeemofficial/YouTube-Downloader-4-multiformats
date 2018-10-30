@@ -10,6 +10,8 @@ Yes, there are multiple PHP-based youtube downloaders on the Internet, but all o
 
 This script does not depend on anything other than cURL. No Javascript interpreters, no calls to shell... nothing but pure PHP :heart_eyes:
 
+#### Now all download problem fixed with built-in proxy, check this [proxied branch](https://github.com/madcode-git/YouTube-Downloader/tree/proxied)
+
 ## Installation
 
 Recommended way of installing this is via [Composer](http://getcomposer.org/):
