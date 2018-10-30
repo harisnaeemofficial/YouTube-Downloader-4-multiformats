@@ -14,11 +14,16 @@ This script does not depend on anything other than cURL. No Javascript interpret
 
 ## Installation
 
-Recommended way of installing this is via [Composer](http://getcomposer.org/):
+#### Recommended way of installing this is via [Composer](http://getcomposer.org/):
 
-```
-composer require madcodez/youtube-downloader
-```
+- Install Default Library
+    ```
+    composer require madcodez/youtube-downloader
+    ```
+- Install [Proxied](https://github.com/madcode-git/YouTube-Downloader/tree/proxied) Library
+    ```
+    composer require madcodez/youtube-downloader:dev-proxied
+    ```
 
 ## Usage
 
