@@ -4,21 +4,116 @@ class YTDownloader {
 
     private $cache_dir;
 
-	private $cookie_dir;	
+	private $cookie_dir;
 
 	private $itag_info = array(
 
-		18 => "MP4[640x360]",
+	// Full Video
 
-		22 => "HD MP4[1280x720]",
+    18 => "MP4[640x360]",
 
-		36 => "3GP[320x180]",
+	22 => "HD MP4[1280x720]",
 
-		43 => "WEBM[640x360]",	
+	36 => "3GP[320x180]",
 
-		17 => "3GP[176x144]"
+	43 => "WEBM[640x360]",	
+
+	17 => "3GP[176x144]",
+
+    // DASH videos
+
+    137 => "(Video Only) MP4[1920x1080]",
+
+    248 => "(Video Only) WEBM[1920x1080]",
+
+    136 => "(Video Only) MP4[1280x720]",
+
+    247 => "(Video Only) WEBM[1280x720]",
+
+    135 => "(Video Only) MP4[854x480]",
+
+    244 => "(Video Only) WEBM[854x480]",
+
+    134 => "(Video Only) MP4[640x360]",
+
+    243 => "(Video Only) WEBM[640x360]",
+
+    133 => "(Video Only) MP4[320x240]",
+
+    242 => "(Video Only) WEBM[320x240]",
+
+    160 => "(Video Only) MP4[176x144]",
+
+    278 => "(Video Only) WEBM[176x144]",
+
+    // Dash Audios
+
+    140 => "(Audio Only) M4A[128Kbps]",
+
+    171 => "(Audio Only) WEBM[128Kbps]",
+
+    249 => "(Audio Only) WEBM[50Kbps]",
+
+    250 => "(Audio Only) WEBM[70Kbps]",
+
+    251 => "(Audio Only) WEBM[160Kbps]"
 
 	);
+
+
+  private $itag_ext = array(
+
+    // Full Video
+
+    18 => ".mp4",
+
+    22 => ".mp4",
+
+    36 => ".3gp",
+
+    43 => ".webm",  
+
+    17 => ".3gp",
+
+    // DASH videos
+
+    137 => ".mp4",
+
+    248 => ".webm",
+
+    136 => ".mp4",
+
+    247 => ".webm",
+
+    135 => ".mp4",
+
+    244 => ".webm",
+
+    134 => ".mp4",
+
+    243 => ".webm",
+
+    133 => ".mp4",
+
+    242 => ".webm",
+
+    160 => ".mp4",
+
+    278 => ".webm",
+
+    // Dash Audios
+
+    140 => ".mp4",
+
+    171 => ".webm",
+
+    249 => ".webm",
+
+    250 => ".webm",
+
+    251 => ".webm"
+
+  );
 
 	
 
@@ -36,318 +131,323 @@ class YTDownloader {
 
 	}
 
-        public function getDownloadLinks($id) {
+    public function getDownloadLinks($id)
+    {
 
-               $videoID = $id;
+        $returnData = FALSE;
+        
+        $videoID = $this->extractId($id);
 
-               $webPage = $this->curlGet('https://www.youtube.com/embed/'.$videoID);      
+        $webPage = $this->curlGet('https://www.youtube.com/watch?v='.$videoID);      
 
-               $sts = null;
+        $sts = null;
 
-               if(preg_match('|"sts":([0-9]{4,}),"|i', $webPage, $matches)) {
+        if(preg_match('|"sts":([0-9]{4,}),"|i', $webPage, $matches)) {
 
-               $sts = $matches[1];
+            $sts = $matches[1];
 
-               }
+        }
 
-               foreach(array('vevo', 'embedded', 'detailpage') as $elKey) {
+        foreach(array('vevo', 'embedded', 'detailpage') as $elKey) {
 
-                    $query = http_build_query(array(
+            $query = http_build_query(array(
 
-                        'c' => 'web',
+                'c' => 'web',
 
-                        'el' => $elKey,
+                'el' => $elKey,
 
-                        'hl' => 'en_US',
+                'hl' => 'en_US',
 
-                        'sts' => $sts,
+                'sts' => $sts,
 
-                        'cver' => 'html5',
+                'cver' => 'html5',
 
-                        'eurl' => "https://youtube.googleapis.com/v/{$videoID}",
+                'eurl' => "https://youtube.googleapis.com/v/{$videoID}",
 
-                        'html5' => '1',
+                'html5' => '1',
 
-                        'iframe' => '1',
+                'iframe' => '1',
 
-                        'authuser' => '1',
+                'authuser' => '1',
 
-                        'video_id' => $videoID,
+                'video_id' => $videoID,
 
-                    ));
+            ));
 
           
 
-                if($this->is_Ok($videoData = $this->curlGet("https://www.youtube.com/get_video_info?{$query}"))) {
+            if($this->is_Ok($videoData = $this->curlGet("http://www.youtube.com/get_video_info?{$query}"))) {
 
-                        parse_str($videoData, $videoData);
+                parse_str($videoData, $videoData);
 
-                        break;
+                break;
+            }
 
-                 }
+        }
 
-              }
+        if(isset($videoData['status']) && $videoData['status'] !== 'fail') {
+            
+            $vInfo['Title'] = $videoData['title'];
 
-              $draftLink = explode(',',$videoData['url_encoded_fmt_stream_map']);
+            $vInfo['ChannelName'] = $videoData['author'];
 
-              foreach($draftLink as $dlink) {
+            $vInfo['ChannelId'] = $videoData['ucid'];
 
-              parse_str($dlink,$mLink[]);
+            $vInfo['Thumbnail'] = str_replace('default', 'hqdefault', $videoData['thumbnail_url']);
 
-              }
+            $vInfo['Duration'] = $videoData['length_seconds'];
 
-              foreach($mLink as $linker) {
+            $vInfo['Rating'] = $videoData['avg_rating'];
 
-                if(isset($linker['s'])) {
+        }
 
-                   $linkData[] = array(
+        if (isset($videoData['url_encoded_fmt_stream_map']) && isset($videoData['adaptive_fmts'])) {
+            
+            $draft1 = explode(',',$videoData['url_encoded_fmt_stream_map']);
+            $draft2 = explode(',',$videoData['adaptive_fmts']);
 
-                     'url' => preg_replace('@(\/\/)[^\.]+(\.googlevideo\.com)@', '$1redirector$2', $linker['url']).'&signature='.$this->sig_decipher($linker['s'],$this->get_instructions($webPage)).'&title='.$this->clean_name($videoData['title']),
+            foreach ($draft1 as $key) {
+                $draftLink[] = $key;
+            }
 
-                     'itag' => $linker['itag'],
+            foreach ($draft2 as $key) {
+                $draftLink[] = $key;
+            }
 
-                     'type' => $this->itag_info[$linker['itag']]
+            foreach($draftLink as $dlink) {
 
-                   );
-
-               } else {
-
-                  $linkData[] = array(
-
-                    'url' => preg_replace('@(\/\/)[^\.]+(\.googlevideo\.com)@', '$1redirector$2', $linker['url']).'&title='.$this->clean_name($videoData['title']),
-
-                    'itag' => $linker['itag'],
-
-                    'type' => $this->itag_info[$linker['itag']]
-
-                   );
-
-               }
+                parse_str($dlink,$mLink[]);
 
             }
 
-            return $linkData;
+            if (isset($mLink[0]['s'])) {
+                $instructions = $this->get_instructions($webPage);
+            }
+
+            foreach($mLink as $linker) {
+
+                if(isset($linker['s'])) {
+
+                    $linkData[] = array(
+
+                        'url' => preg_replace('@(https\:\/\/)[^\.]+(\.googlevideo\.com)@', 'https://redirector$2', $linker['url']).'&signature='.$this->sig_decipher($linker['s'], $instructions).'&title='.$this->clean_name($videoData['title']),
+
+                        'itag' => $linker['itag'],
+
+                        'type' => isset($this->itag_info[$linker['itag']]) ? $this->itag_info[$linker['itag']] : 'Unknown'
+
+                    );
+
+                } else {
+
+                    $linkData[] = array(
+
+                        'url' => preg_replace('@(https\:\/\/)[^\.]+(\.googlevideo\.com)@', 'https://redirector$2', $linker['url']).'&title='.$this->clean_name($videoData['title']),
+
+                        'itag' => $linker['itag'],
+
+                        'type' => isset($this->itag_info[$linker['itag']]) ? $this->itag_info[$linker['itag']] : 'Unknown'
+
+                    );
+               }
+
+            }
+        }
+
+        if (!empty($vInfo)) {
+            $returnData['info'] = $vInfo;
+        }
+
+        if (!empty($linkData)) {
+            $returnData['dl'] = $linkData;
+        }
+
+        return $returnData;
+    }
+
+
+    protected function curlGet($url)
+    {
+    
+        if(in_array('curl', get_loaded_extensions())){
+            $ch = curl_init($url);
+        
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            //curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        
+            $result = curl_exec($ch);
+            curl_close($ch);
+        
+            return $result;
+        }
+
+        if(ini_get('allow_url_fopen')){
+            return @file_get_contents($url);
+        }
+        
+        return FALSE;
+    }
+
+    private function is_Ok($var) {
+
+        if(!preg_match('|status=fail|i',$var)) {
+
+            return true;
 
         }
 
-        private function is_Ok($var) {
+    }
 
-                if(!preg_match('|status=fail|i',$var)) {
+    private function extractId($str)
+    {
+        
+        if(preg_match('/[a-z0-9_-]{11}/i', $str, $matches)){
+            return $matches[0];
+        }
+        
+        return FALSE;
+    }
 
-                return true;
+    private function get_instructions($html) {
+
+        $playerPattern = '/"assets":.+?"js":\s*("[^"]+")/';
+
+        if(preg_match($playerPattern, $html, $matches) && is_string($_player = json_decode($matches[1])) && strlen($_player) >= 1) {
+
+            $playerLink = substr($_player, 0, 2) == '//' ? "https:{$_player}" : "https://www.youtube.com{$_player}";
+
+            $cache_player = $this->cache_dir.'/.ht-'.md5($_player);
+
+            if(file_exists($cache_player)) {
+
+                return unserialize(file_get_contents($cache_player));
+
+            } else {
+
+                $js_code = $this->curlGet($playerLink);
+
+                $instructions = $this->sig_js_decode($js_code);
+
+                if($instructions){
+
+                    file_put_contents($cache_player, serialize($instructions));
+
+                    return $instructions;
 
                 }
-
+            }
         }
 
-        public function curlGet($url){
+        return false;
+    }
 
-    
+    private function clean_name($name)
+    {
 
-                $tmpfname = $this->cookie_dir.'/cookie.txt';
+        $special_chars = array(".","?", "[", "]", "/", "\\", "=", "<", ">", ":", ";", ",", "'", "\"", "&", "$", "#", "*", "(", ")", "|", "~", "`", "!", "{", "}", "%", "+", chr(0));
 
-	
+        $filename = str_replace($special_chars,' ',$name);
+        $filename = preg_replace( "#\x{00a0}#siu", ' ', $filename );
+        $filename = str_replace( array( '%20', '+', ' '), '-', $filename );
+        $filename = preg_replace( '/[\r\n\t -]+/', '-', $filename );
+        $filename = trim( $filename, '.-_' );
 
-		$ch = curl_init($url);
+        return $filename;
 
-		
+    }
 
-		curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0');
+    private function sig_decipher($signature, $instructions)
+    {
 
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	   foreach($instructions as $opt){
 
-		curl_setopt($ch, CURLOPT_HEADER, 0);
+	       $command = $opt[0];
 
-		
+	       $value = $opt[1];
 
-		curl_setopt($ch, CURLOPT_COOKIEJAR, $tmpfname);
+	       if($command == 'swap'){
 
-		curl_setopt($ch, CURLOPT_COOKIEFILE, $tmpfname);
+	       $temp = $signature[0];
 
-		
+	       $signature[0] = $signature[$value % strlen($signature)];
 
-		//curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+	       $signature[$value] = $temp;
 
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+	       } elseif($command == 'splice'){
 
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+	       $signature = substr($signature, $value);
 
-		
+	       } elseif($command == 'reverse'){
 
-		$result = curl_exec($ch);
+	       $signature = strrev($signature);
 
-		curl_close($ch);
+	       }
 
-		
+	   }
 
-		return $result;
+	   return trim($signature);
 
 	}
 
-        private function get_instructions($html) {
+    private function sig_js_decode($file){
+    
+    	$script     =   $this->getBetween($file, 'a=a.split("");', ';return a.join("")');
+        $script     =   str_replace(array("a,","\n"), array(',',''), $script);
+        $script2    =   $this->getBetween($file, 'var ' . substr($script, 0, 2).'={', '};');
+        $script2    =   str_replace('a,b', 'a', $script2);
+        $script     =   str_replace(substr($script, 0, 2).'.', '', $script);
+        $script     =   str_replace('(', '', $script);
+        $script     =   str_replace(')', '', $script);
+        $script_ex  =   explode(";", $script);
+        $script2_ex =   explode("\n", $script2);
 
-                $playerPattern = '/"assets":.+?"js":\s*("[^"]+")/';
-
-                if(preg_match($playerPattern, $html, $matches) &&
-
-                    is_string($_player = json_decode($matches[1])) && strlen($_player) >= 1
-
-                ) {
-
-                    $playerLink = substr($_player, 0, 2) == '//' ? "https:{$_player}" : "https://www.youtube.com{$_player}";
-
-                    $cache_player = $this->cache_dir.'/.ht-'.md5($_player);
-
-                    if(file_exists($cache_player)) {
-
-                      return unserialize(file_get_contents($cache_player));
-
-                    } else {
-
-                      $js_code = $this->curlGet($playerLink);
-
-		      $instructions = $this->sig_js_decode($js_code);
-
-				
-
-			if($instructions){
-
-			   file_put_contents($cache_player, serialize($instructions));
-
-			   return $instructions;
-
-		        }
-
-                    }
-
-                }
-
-                return false;
-
+        for($i = 0; $i < count($script2_ex); $i++) {
+            $tmp = isset($script2_ex[$i]) ? explode(':', $script2_ex[$i]) : [];
+            $n   = isset($tmp[0]) ? $tmp[0] : '';
+            $m   = isset($tmp[1]) ? $tmp[1] : '';
+            $tempS[$n] = $m;
         }
 
-        private function clean_name($name) {
-
-                $special_chars = array("?", "[", "]", "/", "\\", "=", "<", ">", ":", ";", ",", "'", "\"", "&", "$", "#", "*", "(", ")", "|", "~", "`", "!", "{", "}", "%", "+", chr(0));
-
-                $filename = str_replace($special_chars,' ',$name);
-
-                $filename = preg_replace( "#\x{00a0}#siu", ' ', $filename );
-
-                $filename = str_replace( array( '%20', '+', ' '), '-', $filename );
-
-                $filename = preg_replace( '/[\r\n\t -]+/', '-', $filename );
-
-                $filename = trim( $filename, '.-_' );
-
-                return $filename;
-
+        for($i = 0; $i < count($script_ex); $i++) {
+            $tmp = isset($script_ex[$i]) ? explode(',', $script_ex[$i]) : [];
+            $a = isset($tmp[0]) ? $tmp[0] : '';
+            $b = isset($tmp[1]) ? $tmp[1] : '';
+            $deKey[] = $this->createCommad($a, $b, $tempS);
         }
 
-        private function sig_decipher($signature, $instructions){
+        return $deKey;
+    }
 
-		
+    private function createCommad($value, $num, $source)
+    {
+        $result = '';
 
-		foreach($instructions as $opt){
+        if (isset($source[$value]) && mb_strpos($source[$value], 'reverse')) {
+            $result = array('reverse', '');
+        } elseif (isset($source[$value]) && mb_strpos($source[$value], 'a.splice')) {
+            $result = array('splice', $num);
+        } else {
+            $result = array('swap', $num);
+        }
 
-			
+        return $result;
+    }
 
-			$command = $opt[0];
+    private function getBetween($content, $start, $end)
+    {
+        $r = explode($start, $content);
 
-			$value = $opt[1];
-
-			
-
-			if($command == 'swap'){
-
-				
-
-				$temp = $signature[0];
-
-				$signature[0] = $signature[$value % strlen($signature)];
-
-				$signature[$value] = $temp;
-
-				
-
-			} elseif($command == 'splice'){
-
-				$signature = substr($signature, $value);
-
-			} elseif($command == 'reverse'){
-
-				$signature = strrev($signature);
-
-			}
-
-		}
-
-		
-
-		return trim($signature);
-
-	}
-
-    private function sig_js_decode($player_html){
+        if (isset($r[1])) {
+            $r = explode($end, $r[1]);
+            return $r[0];
+        }
     
-    	$signatureFunctionPatterns = [
-            '/(["\'])signature\1\s*,\s*([a-zA-Z0-9$]+)\(/',
-            '/\.sig\|\|([a-zA-Z0-9$]+)\(/',
-            '/yt\.akamaized\.net\/\)\s*\|\|\s*.*?\s*c\s*&&\s*d\.set\([^,]+\s*,\s*([a-zA-Z0-9$]+)\(/',
-            '/\bc\s*&&\s*d\.set\([^,]+\s*,\s*([a-zA-Z0-9$]+)\(/',
-        ];
+    return '';
 
-        foreach ($signatureFunctionPatterns as $pattern) {
-    	
-    	if(preg_match($pattern, $player_html, $matches)){
-    
-    	$func_name = $matches[1];		
-    	$func_name = preg_quote($func_name);
-    
-    	
-    	if(preg_match('/'.$func_name.'=function\([a-z]+\){(.*?)}/', $player_html, $matches)){
-    
-    	$js_code = $matches[1];
-    
-    	if(preg_match_all('/([a-z0-9]{2})\.([a-z0-9]{2})\([^,]+,(\d+)\)/i', $js_code, $matches) != false){
-    
-    	// must be identical
-    	$obj_list = $matches[1];
-    
-    	$func_list = $matches[2];
-    
-    	// extract javascript code for each one of those statement functions
-    	preg_match_all('/('.implode('|', $func_list).'):function(.*?)\}/m', $player_html, $matches2,  PREG_SET_ORDER);
-    
-    	$functions = array();
-    
-    	// translate each function according to its use
-    	foreach($matches2 as $m){
-    
-    		if(strpos($m[2], 'splice') !== false){
-    		$functions[$m[1]] = 'splice';						
-    		} elseif(strpos($m[2], 'a.length') !== false){
-    		$functions[$m[1]] = 'swap';
-    		} elseif(strpos($m[2], 'reverse') !== false){
-    		$functions[$m[1]] = 'reverse';
-    		}
-    	}
-    
-    	// FINAL STEP! convert it all to instructions set
-    	$instructions = array();
-    
-    	foreach($matches[2] as $index => $name){
-    	$instructions[] = array($functions[$name], $matches[3][$index]);
-    	}
-    
-    	return $instructions;
-    	}
-    	}
-    		break;
-    	}
-    	}
-    
-    	return false;
     }
 
 }
